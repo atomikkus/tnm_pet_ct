@@ -1,37 +1,18 @@
-# TNM Staging Prediction System - Dependencies
-
-# Core LLM and Orchestration
 mistralai>=1.0.0
 langchain>=0.1.0
 langgraph>=0.0.20
 langchain-mistralai>=0.0.1
-
-# Data Validation and Configuration
 pydantic>=2.0.0
 pydantic-settings>=2.0.0
-
-# Environment and Configuration
 python-dotenv>=1.0.0
-
-# FastAPI Web Service
 fastapi>=0.109.0
 uvicorn[standard]>=0.27.0
 python-multipart>=0.0.6
-
-# CLI and UI
 typer>=0.9.0
 rich>=13.0.0
-
-# Progress and Utilities
 tqdm>=4.65.0
-
-# Markdown Processing (already used in pdf_to_markdown.py)
 markdown-it-py>=3.0.0
 mdit-plain>=0.0.1
-
-# Optional: Testing
 pytest>=7.4.0
 pytest-asyncio>=0.21.0
-
-# Optional: Production Server
 gunicorn>=21.2.0
