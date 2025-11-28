@@ -3,7 +3,6 @@
 An intelligent multi-agent system for automated TNM (Tumor, Node, Metastasis) staging of lung cancer from PET-CT radiological reports using AI.
 
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ## 🎯 Overview
 
@@ -265,20 +264,29 @@ gunicorn app:app \
   --bind 0.0.0.0:8000
 ```
 
-### Docker (Optional)
+### 🐳 Docker Usage
 
-```dockerfile
-FROM python:3.10-slim
+You can run the application using Docker Compose.
 
-WORKDIR /app
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+#### Full Stack (API + Streamlit)
+Run both the FastAPI backend and Streamlit frontend:
 
-COPY . .
-EXPOSE 8000
-
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
+```bash
+docker-compose up --build
 ```
+
+- **Streamlit App**: http://localhost:8501
+- **API Docs**: http://localhost:8000/docs
+- **Data Persistence**: Uploads and results are saved to `./data` on your host machine.
+
+#### API Only
+Run only the FastAPI backend:
+
+```bash
+docker-compose -f docker-compose.api.yaml up --build
+```
+
+- **API Docs**: http://localhost:8000/docs
 
 ## 🐛 Troubleshooting
 
@@ -307,10 +315,5 @@ CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
 
 This AI system is designed to **assist** in TNM staging but should **not replace** clinical judgment. All staging predictions must be reviewed by qualified oncologists and radiologists.
 
-## 📄 License
-
-MIT License - See LICENSE file for details
-
----
 
 **Built with ❤️ for improved cancer staging accuracy**
