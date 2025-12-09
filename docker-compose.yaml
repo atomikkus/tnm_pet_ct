@@ -6,7 +6,7 @@ services:
       context: .
       dockerfile: Dockerfile.api
     ports:
-      - "8000:8000"
+      - "8022:8022"
     volumes:
       - ./data:/app/data
     environment:
@@ -18,11 +18,11 @@ services:
       context: .
       dockerfile: Dockerfile.streamlit
     ports:
-      - "8501:8501"
+      - "8065:8065"
     volumes:
       - ./data:/app/data
     environment:
-      - API_BASE_URL=http://api:8000
+      - API_BASE_URL=http://api:8022
     depends_on:
       - api
     restart: always
