@@ -73,3 +73,6 @@ Thumbs.db
 # FastAPI
 uploads/
 *.pid
+
+# PDF Cache
+.pdf_cache/

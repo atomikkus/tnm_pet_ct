@@ -45,21 +45,21 @@ Start the API server:
 python app.py
 ```
 
-The API will be available at `http://localhost:8000`
+The API will be available at `http://localhost:8022`
 
-**Interactive API docs:** `http://localhost:8000/docs`
+**Interactive API docs:** `http://localhost:8022/docs`
 
 #### Upload PDF via API:
 
 ```bash
-curl -X POST "http://localhost:8000/api/v1/stage/pdf" \
+curl -X POST "http://localhost:8022/api/v1/stage/pdf" \
   -F "file=@test_data_pet_ct/test_pet_ct8.pdf"
 ```
 
 #### Send text via API:
 
 ```bash
-curl -X POST "http://localhost:8000/api/v1/stage/text" \
+curl -X POST "http://localhost:8022/api/v1/stage/text" \
   -H "Content-Type: application/json" \
   -d '{
     "report_text": "Your markdown report text here...",
@@ -130,7 +130,7 @@ python main.py --input report.pdf --verbose
 ### Start API in production mode:
 
 ```bash
-uvicorn app:app --host 0.0.0.0 --port 8000 --workers 4
+uvicorn app:app --host 0.0.0.0 --port 8022 --workers 4
 ```
 
 ## Testing

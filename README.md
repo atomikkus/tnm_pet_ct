@@ -45,13 +45,13 @@ python main.py --input report.pdf --verbose
 # Start the API server
 python app.py
 
-# API will be available at http://localhost:8000
-# Interactive docs at http://localhost:8000/docs
+# API will be available at http://localhost:8022
+# Interactive docs at http://localhost:8022/docs
 ```
 
 **Upload PDF via API:**
 ```bash
-curl -X POST "http://localhost:8000/api/v1/stage/pdf" \
+curl -X POST "http://localhost:8022/api/v1/stage/pdf" \
   -F "file=@report.pdf"
 ```
 
@@ -150,7 +150,7 @@ Edit `config.py` to adjust:
 ### Example Request (PDF):
 
 ```bash
-curl -X POST "http://localhost:8000/api/v1/stage/pdf" \
+curl -X POST "http://localhost:8022/api/v1/stage/pdf" \
   -F "file=@report.pdf" \
   -F "report_id=RPT001" \
   -F "patient_id=PT123"
@@ -159,7 +159,7 @@ curl -X POST "http://localhost:8000/api/v1/stage/pdf" \
 ### Example Request (Text):
 
 ```bash
-curl -X POST "http://localhost:8000/api/v1/stage/text" \
+curl -X POST "http://localhost:8022/api/v1/stage/text" \
   -H "Content-Type: application/json" \
   -d '{
     "report_text": "Right upper lobe mass measuring 4.2 cm...",
@@ -261,7 +261,7 @@ pip install gunicorn
 gunicorn app:app \
   --workers 4 \
   --worker-class uvicorn.workers.UvicornWorker \
-  --bind 0.0.0.0:8000
+  --bind 0.0.0.0:8022
 ```
 
 ### 🐳 Docker Usage
@@ -275,8 +275,8 @@ Run both the FastAPI backend and Streamlit frontend:
 docker-compose up --build
 ```
 
-- **Streamlit App**: http://localhost:8501
-- **API Docs**: http://localhost:8000/docs
+- **Streamlit App**: http://localhost:8065
+- **API Docs**: http://localhost:8022/docs
 - **Data Persistence**: Uploads and results are saved to `./data` on your host machine.
 
 #### API Only
@@ -286,7 +286,7 @@ Run only the FastAPI backend:
 docker-compose -f docker-compose.api.yaml up --build
 ```
 
-- **API Docs**: http://localhost:8000/docs
+- **API Docs**: http://localhost:8022/docs
 
 ## 🐛 Troubleshooting
 

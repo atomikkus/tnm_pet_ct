@@ -37,48 +37,78 @@ class TNMWorkflow:
         self.graph = self._build_graph()
     
     def _t_agent_node(self, state: TNMWorkflowState) -> TNMWorkflowState:
-        """Execute T-Agent analysis."""
-        try:
-            logger.info("Workflow: Executing T-Agent")
-            t_result = self.t_agent.analyze(state["report_text"])
-            state["t_result"] = t_result
-            return state
-        except Exception as e:
-            logger.error(f"Workflow: T-Agent failed: {e}")
-            state["error"] = f"T-Agent error: {str(e)}"
-            return state
+        """Execute T-Agent analysis with retry logic."""
+        import time
+        
+        max_retries = 3
+        retry_delay = 1.0
+        
+        for attempt in range(max_retries):
+            try:
+                logger.info(f"Workflow: Executing T-Agent (attempt {attempt + 1}/{max_retries})")
+                t_result = self.t_agent.analyze(state["report_text"])
+                state["t_result"] = t_result
+                return state
+            except Exception as e:
+                if attempt < max_retries - 1:
+                    logger.warning(f"Workflow: T-Agent attempt {attempt + 1} failed, retrying... Error: {str(e)[:200]}")
+                    time.sleep(retry_delay * (2 ** attempt))  # Exponential backoff
+                else:
+                    logger.error(f"Workflow: T-Agent failed after {max_retries} attempts: {e}")
+                    state["error"] = f"T-Agent error: {str(e)}"
+                    return state
     
     def _n_agent_node(self, state: TNMWorkflowState) -> TNMWorkflowState:
-        """Execute N-Agent analysis with tumor laterality context."""
-        try:
-            logger.info("Workflow: Executing N-Agent")
-            
-            # Extract laterality from T-result if available
-            context = {}
-            if state.get("t_result"):
-                laterality = state["t_result"].get("laterality")
-                if laterality:
-                    context["tumor_laterality"] = laterality
-            
-            n_result = self.n_agent.analyze(state["report_text"], context=context)
-            state["n_result"] = n_result
-            return state
-        except Exception as e:
-            logger.error(f"Workflow: N-Agent failed: {e}")
-            state["error"] = f"N-Agent error: {str(e)}"
-            return state
+        """Execute N-Agent analysis with tumor laterality context and retry logic."""
+        import time
+        
+        max_retries = 3
+        retry_delay = 1.0
+        
+        for attempt in range(max_retries):
+            try:
+                logger.info(f"Workflow: Executing N-Agent (attempt {attempt + 1}/{max_retries})")
+                
+                # Extract laterality from T-result if available
+                context = {}
+                if state.get("t_result"):
+                    laterality = state["t_result"].get("laterality")
+                    if laterality:
+                        context["tumor_laterality"] = laterality
+                
+                n_result = self.n_agent.analyze(state["report_text"], context=context)
+                state["n_result"] = n_result
+                return state
+            except Exception as e:
+                if attempt < max_retries - 1:
+                    logger.warning(f"Workflow: N-Agent attempt {attempt + 1} failed, retrying... Error: {str(e)[:200]}")
+                    time.sleep(retry_delay * (2 ** attempt))  # Exponential backoff
+                else:
+                    logger.error(f"Workflow: N-Agent failed after {max_retries} attempts: {e}")
+                    state["error"] = f"N-Agent error: {str(e)}"
+                    return state
     
     def _m_agent_node(self, state: TNMWorkflowState) -> TNMWorkflowState:
-        """Execute M-Agent analysis."""
-        try:
-            logger.info("Workflow: Executing M-Agent")
-            m_result = self.m_agent.analyze(state["report_text"])
-            state["m_result"] = m_result
-            return state
-        except Exception as e:
-            logger.error(f"Workflow: M-Agent failed: {e}")
-            state["error"] = f"M-Agent error: {str(e)}"
-            return state
+        """Execute M-Agent analysis with retry logic."""
+        import time
+        
+        max_retries = 3
+        retry_delay = 1.0
+        
+        for attempt in range(max_retries):
+            try:
+                logger.info(f"Workflow: Executing M-Agent (attempt {attempt + 1}/{max_retries})")
+                m_result = self.m_agent.analyze(state["report_text"])
+                state["m_result"] = m_result
+                return state
+            except Exception as e:
+                if attempt < max_retries - 1:
+                    logger.warning(f"Workflow: M-Agent attempt {attempt + 1} failed, retrying... Error: {str(e)[:200]}")
+                    time.sleep(retry_delay * (2 ** attempt))  # Exponential backoff
+                else:
+                    logger.error(f"Workflow: M-Agent failed after {max_retries} attempts: {e}")
+                    state["error"] = f"M-Agent error: {str(e)}"
+                    return state
     
     def _compiler_node(self, state: TNMWorkflowState) -> TNMWorkflowState:
         """Execute Staging Compiler to combine results."""

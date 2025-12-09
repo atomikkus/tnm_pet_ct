@@ -7,7 +7,7 @@ import json
 from pathlib import Path
 
 # Base URL
-BASE_URL = "http://localhost:8000"
+BASE_URL = "http://localhost:8022"
 
 def test_health():
     """Test health endpoint."""

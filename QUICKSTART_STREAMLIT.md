@@ -17,7 +17,7 @@ pip install -r requirements.txt
 ### 2. Start the FastAPI Backend
 ```powershell
 # Terminal 1
-uvicorn app:app --reload --host 0.0.0.0 --port 8000
+uvicorn app:app --reload --host 0.0.0.0 --port 8022
 ```
 
 ### 3. Start the Streamlit App
@@ -26,7 +26,7 @@ uvicorn app:app --reload --host 0.0.0.0 --port 8000
 streamlit run streamlit_app.py
 ```
 
-The app will automatically open in your default browser at `http://localhost:8501`
+The app will automatically open in your default browser at `http://localhost:8065`
 
 ## Features
 

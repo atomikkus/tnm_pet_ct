@@ -12,7 +12,7 @@ from datetime import datetime
 from typing import Dict, Any, Optional
 
 # Configuration
-API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000")
+API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8022")
 DATA_DIR = "data"
 UPLOADS_DIR = os.path.join(DATA_DIR, "uploads")
 RESULTS_DIR = os.path.join(DATA_DIR, "results")
@@ -53,7 +53,7 @@ def save_result(original_filename: str, api_result: Dict, feedback: Dict):
     return file_path
 
 def stage_from_pdf(file_path: str) -> Optional[Dict[str, Any]]:
-    """Send PDF to API for staging."""
+    """Send PDF file path to API for staging."""
     try:
         with open(file_path, "rb") as f:
             files = {"file": (os.path.basename(file_path), f, "application/pdf")}
@@ -62,6 +62,23 @@ def stage_from_pdf(file_path: str) -> Optional[Dict[str, Any]]:
                 files=files,
                 timeout=120
             )
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        st.error(f"API Error: {str(e)}")
+        return None
+
+def stage_from_pdf_direct(uploaded_file) -> Optional[Dict[str, Any]]:
+    """Send uploaded file directly to API for staging without saving locally first."""
+    try:
+        # Reset file pointer to beginning
+        uploaded_file.seek(0)
+        files = {"file": (uploaded_file.name, uploaded_file, "application/pdf")}
+        response = requests.post(
+            f"{API_BASE_URL}/api/v1/stage/pdf",
+            files=files,
+            timeout=120
+        )
         response.raise_for_status()
         return response.json()
     except requests.exceptions.RequestException as e:
@@ -150,12 +167,23 @@ def main():
     uploaded_file = st.file_uploader("Choose a PDF file", type=["pdf"])
 
     if uploaded_file:
-        # Save file immediately
-        file_path = save_uploaded_file(uploaded_file)
-        st.success(f"File saved: {os.path.basename(file_path)}")
-
+        # Track saved files to avoid duplicates on Streamlit re-runs
+        file_key = f"saved_{uploaded_file.name}_{uploaded_file.size}"
+        
+        # Only save if we haven't saved this file yet
+        if file_key not in st.session_state:
+            file_path = save_uploaded_file(uploaded_file)
+            st.session_state[file_key] = file_path
+            st.session_state.current_file_path = file_path
+            st.success(f"📄 File saved: {os.path.basename(file_path)}")
+        else:
+            # Use the already saved file path
+            file_path = st.session_state[file_key]
+            st.info(f"📄 File ready: {os.path.basename(file_path)}")
+        
         if st.button("Analyze Report", type="primary"):
             with st.spinner("Analyzing..."):
+                # Use the saved file path
                 result = stage_from_pdf(file_path)
                 
                 if result:
@@ -233,9 +261,13 @@ def main():
         else:
             st.info("✅ Feedback submitted for this report.")
             if st.button("Analyze Another Report"):
-                del st.session_state.current_result
-                del st.session_state.current_file
-                del st.session_state.feedback_submitted
+                # Clear all session state for a fresh start
+                keys_to_remove = [key for key in st.session_state.keys() 
+                                 if key.startswith("saved_") or key in 
+                                 ["current_result", "current_file", "current_file_path", 
+                                  "feedback_submitted", "show_deep_dive"]]
+                for key in keys_to_remove:
+                    del st.session_state[key]
                 st.rerun()
 
 if __name__ == "__main__":

@@ -50,7 +50,7 @@ The deep dive reveals comprehensive details:
 2. **Start the FastAPI Backend**
    ```powershell
    # In a terminal window
-   uvicorn app:app --reload --host 0.0.0.0 --port 8000
+   uvicorn app:app --reload --host 0.0.0.0 --port 8022
    ```
 
 3. **Start the Streamlit App**
@@ -61,7 +61,7 @@ The deep dive reveals comprehensive details:
 
 ### Configuration
 
-The app connects to the FastAPI backend at `http://localhost:8000` by default. To change this:
+The app connects to the FastAPI backend at `http://localhost:8022` by default. To change this:
 
 ```powershell
 # Set environment variable
@@ -131,11 +131,11 @@ The combined TNM components map to an overall stage (0-IV):
 
 ### Cannot Connect to API
 
-**Error**: "⚠️ Cannot connect to API at http://localhost:8000"
+**Error**: "⚠️ Cannot connect to API at http://localhost:8022"
 
 **Solutions**:
 1. Ensure FastAPI is running: `uvicorn app:app --reload`
-2. Check the API port (default: 8000)
+2. Check the API port (default: 8022)
 3. Verify no firewall blocking connections
 4. Set correct API_BASE_URL environment variable
 

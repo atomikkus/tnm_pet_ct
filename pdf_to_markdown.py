@@ -11,12 +11,55 @@ import re
 from markdown_it import MarkdownIt
 from mdit_plain.renderer import RendererPlain
 import time
+import hashlib
+import json
+import logging
+
+logger = logging.getLogger(__name__)
 
 class MarkdownConverter:
-    def __init__(self, api_key: str):
+    def __init__(self, api_key: str, cache_dir: str = ".pdf_cache"):
         self.client = Mistral(api_key=api_key)
         # Initialize the markdown parser with default renderer
         self.md_parser = MarkdownIt()
+        # Set up cache directory
+        self.cache_dir = Path(cache_dir)
+        self.cache_dir.mkdir(exist_ok=True)
+    
+    def _get_file_hash(self, file_path: str) -> str:
+        """Generate SHA256 hash of file content for caching."""
+        sha256_hash = hashlib.sha256()
+        with open(file_path, "rb") as f:
+            for byte_block in iter(lambda: f.read(4096), b""):
+                sha256_hash.update(byte_block)
+        return sha256_hash.hexdigest()
+    
+    def _get_cache_path(self, file_hash: str) -> Path:
+        """Get cache file path for a given file hash."""
+        return self.cache_dir / f"{file_hash}.json"
+    
+    def _load_from_cache(self, file_hash: str) -> str:
+        """Load markdown text from cache if available."""
+        cache_path = self._get_cache_path(file_hash)
+        if cache_path.exists():
+            try:
+                with open(cache_path, 'r', encoding='utf-8') as f:
+                    cache_data = json.load(f)
+                    logger.info(f"Loaded PDF conversion from cache: {file_hash[:8]}...")
+                    return cache_data['markdown_text']
+            except Exception as e:
+                logger.warning(f"Failed to load cache: {e}")
+        return None
+    
+    def _save_to_cache(self, file_hash: str, markdown_text: str):
+        """Save markdown text to cache."""
+        cache_path = self._get_cache_path(file_hash)
+        try:
+            with open(cache_path, 'w', encoding='utf-8') as f:
+                json.dump({'markdown_text': markdown_text}, f)
+            logger.info(f"Saved PDF conversion to cache: {file_hash[:8]}...")
+        except Exception as e:
+            logger.warning(f"Failed to save cache: {e}")
 
     def replace_images_in_markdown(self, markdown_str, images_dict):
         for img_name, base64_str in images_dict.items():
@@ -61,10 +104,29 @@ class MarkdownConverter:
             markdowns.append("\n")
         return "\n".join(markdowns)
 
-    def convert_to_markdown(self, input_pdf_path: str):
+    def convert_to_markdown(self, input_pdf_path: str, use_cache: bool = True):
+        """
+        Convert PDF to markdown with optional caching.
+        
+        Args:
+            input_pdf_path: Path to PDF file
+            use_cache: Whether to use cache (default: True)
+            
+        Returns:
+            OCRResponse object or cached response dict
+        """
         pdf_file = Path(input_pdf_path)
         if not pdf_file.is_file():
             raise FileNotFoundError(f"Input PDF file not found: {input_pdf_path}")
+        
+        # Check cache first
+        if use_cache:
+            file_hash = self._get_file_hash(input_pdf_path)
+            cached_text = self._load_from_cache(file_hash)
+            if cached_text:
+                # Return a dict indicating cached response
+                return {"cached": True, "markdown_text": cached_text}
+        
         # OCR - use the existing client instance
         uploaded_file = self.client.files.upload(
             file={
@@ -79,16 +141,41 @@ class MarkdownConverter:
             model="mistral-ocr-latest",
             include_image_base64=True
         )
+        
+        # Save to cache
+        if use_cache:
+            file_hash = self._get_file_hash(input_pdf_path)
+            markdown_text = self.get_combined_markdown(pdf_response, embed_images=False)
+            self._save_to_cache(file_hash, markdown_text)
+        
         return pdf_response
 
-def pdf_to_markdown_text(pdf_path: str, converter: MarkdownConverter, with_images=False) -> str:
-    """Process a single PDF file and return the markdown text."""
+def pdf_to_markdown_text(pdf_path: str, converter: MarkdownConverter, with_images=False, use_cache=True) -> str:
+    """
+    Process a single PDF file and return the markdown text.
+    
+    Args:
+        pdf_path: Path to PDF file
+        converter: MarkdownConverter instance
+        with_images: Whether to include images in markdown
+        use_cache: Whether to use cached conversion (default: True)
+        
+    Returns:
+        Markdown text string
+    """
     try:
-        ocr_response = converter.convert_to_markdown(pdf_path)
+        ocr_response = converter.convert_to_markdown(pdf_path, use_cache=use_cache)
+        
+        # Handle cached response
+        if isinstance(ocr_response, dict) and ocr_response.get("cached"):
+            logger.info(f"Using cached PDF conversion for {Path(pdf_path).name}")
+            return ocr_response["markdown_text"]
+        
+        # Process normal OCR response
         markdown_text = converter.get_combined_markdown(ocr_response, embed_images=with_images)
         return markdown_text
     except Exception as e:
-        print(f"Error processing {pdf_path}: {str(e)}")
+        logger.error(f"Error processing {pdf_path}: {str(e)}")
         raise
 
 def process_pdf(pdf_path: Path, converter: MarkdownConverter):
